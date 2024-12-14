@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 //Importa al esquema desde el archivo
-import { schema } from "./Schema";
+import { schema } from "../app/Schema";
 
 // Configuración del modelo de Google Generative AI
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_KEY);
@@ -22,6 +22,7 @@ export default function Home() {
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [wrongAnswer1, setWrongAnswer1] = useState("");
   const [wrongAnswer2, setWrongAnswer2] = useState("");
+  const [answers, setAnswers] = useState([]);
 
   const geminiCall = async () => {
     try {
@@ -34,12 +35,18 @@ export default function Home() {
         const correct = responseJSON.find((item) => item.correcta);
         const wrongs = responseJSON.filter((item) => !item.correcta);
 
-      
 
-        //Asignar valores de manera segura
-        setCorrectAnswer(correct?.respuesta || "No disponible");
-        setWrongAnswer1(wrongs[0]?.respuesta || "No disponible");
-        setWrongAnswer2(wrongs[1]?.respuesta || "No disponible");
+        const allAnswers = [
+          //Asigacion de valores
+          { text: correct?.respuesta || "No disponible", correct: true },
+          { text: wrongs[0].respuesta || "No disponible", correct: false },
+          { text: wrongs[1].respuesta || "No disponible", correct: false }
+        ]
+
+        //mezclar las respuestas
+        const shuffledAnswers = allAnswers.sort(() => Math.random() - 0.5)
+
+        setAnswers(shuffledAnswers)
       } else {
         console.error("La respuesta no está en el formato esperado.");
       }
@@ -51,7 +58,7 @@ export default function Home() {
   return (
     <section className="flex gap-4">
       <div className=" w-1/3 bg-blue-300 border-2 border-blue-950 text-2xl text-black " >
-  
+
         <lu>
           <li className="menus">Actividades</li>
           <li className="menus">Entrenamiento</li>
@@ -64,7 +71,7 @@ export default function Home() {
       <div className="bg-gray-300 text-black p-3 rounded-lg shadow-md w-1/3">
         <h1 className="p-2">Teniendo en cuenta el siguiente planteamiento, genera tres resultados donde uno sea correcto:</h1>
         <p className="max-w-lg mx-auto bg-blue-300 p-3 text-black rounded-md w-auto">
-         
+
           Tus tíos en Ibarra, Ecuador, invitan a ti y a tu hermano a pasar las vacaciones en su casa. Para celebrar tu cumpleaños,
           tu tía ha planeado asistir a un partido de fútbol en el estadio Olímpico Atahualpa en Quito. Tus tíos cubrirán las entradas,
           la noche en el hotel y la comida durante el partido, además de un recuerdo del equipo. Tienen un presupuesto total de $575.
@@ -103,21 +110,13 @@ export default function Home() {
       </div>
 
       <ul className="space-y-4 w-1/3 ">
-        <li className="bg-gray-200 text-black p-4 rounded-lg shadow-md">
-
-          <strong className="text-black pr-4">Respuesta 1:</strong>
-          <h6 className="text-black">{correctAnswer}</h6>
-        </li>
-        <li className="bg-gray-200 text-black p-4 rounded-lg shadow-md">
-
-          <strong className="text-black pr-4">Respuesta 2:</strong>
-          <h6 className="text-black">{wrongAnswer1}</h6>
-        </li>
-        <li className="bg-gray-200 text-black p-4 rounded-lg shadow-md">
-
-          <strong className="text-black pr-4 grow">Respuesta 3:</strong>
-          <h6 className="text-black">{wrongAnswer2}</h6>
-        </li>
+        {answers.map((answers, index) => (
+          <li key={index} className="bg-gray-200 text-black p-4 rounded-lg shadow-md">
+            <strong className="text-black pr-4">Respuesta {index + 1}:</strong>
+            <h6 className="text-black">{answers.text}</h6>
+            {answers.correct && <span className="text-green-500"> (Correcta)</span>}
+          </li>
+        ))}
       </ul>
     </section>
   );
